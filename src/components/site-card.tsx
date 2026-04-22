@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Globe, TrendingDown, TrendingUp } from "lucide-react";
+import { Globe, Link, TrendingDown, TrendingUp } from "lucide-react";
 import { Site } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import { BookmarkSelector } from "./bookmark-selector";
@@ -34,6 +34,7 @@ export function SiteCard({ site, onlineOverride, index }: Props) {
 
   const online = onlineOverride ?? site.onlineNow;
   const last30Data = site.dailyData.slice(-30);
+  const clickyUrl = `https://clicky.com/?site_id=${encodeURIComponent(site.siteId)}&sitekey=${encodeURIComponent(site.siteKey)}`;
 
   return (
     <Card
@@ -57,7 +58,14 @@ export function SiteCard({ site, onlineOverride, index }: Props) {
           </div>
         )}
         <div className="min-w-0 flex-1">
-          <div className="truncate text-sm font-semibold text-foreground">{site.name}</div>
+          <a
+            href={clickyUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block truncate text-sm font-semibold text-foreground hover:underline"
+          >
+            {site.name}
+          </a>
           <div className="truncate text-xs text-muted-foreground">{site.url}</div>
         </div>
         <BookmarkSelector
