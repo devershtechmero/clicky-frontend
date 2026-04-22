@@ -9,6 +9,8 @@ export interface Site {
   id: string;
   name: string;
   url: string;
+  siteId: string;
+  siteKey: string;
   bookmarkColor: BookmarkColor;
   onlineNow: number;
   dailyData: DailyVisitors[];

@@ -36,6 +36,8 @@ export function generateMockSites(): Site[] {
     id: `site-${i}-${Date.now()}`,
     name: s.name,
     url: s.url,
+    siteId: `${100000 + i}`,
+    siteKey: `key_${Math.random().toString(36).slice(2, 12)}`,
     bookmarkColor: COLORS[Math.floor(Math.random() * COLORS.length)],
     onlineNow: Math.floor(5 + Math.random() * 295),
     dailyData: genDaily(30),

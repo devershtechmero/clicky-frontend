@@ -31,7 +31,13 @@ export function useSites() {
 export function useAddSite() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (input: { name: string; url: string; bookmarkColor: BookmarkColor }) => {
+    mutationFn: async (input: {
+      name: string;
+      url: string;
+      siteId: string;
+      siteKey: string;
+      bookmarkColor: BookmarkColor;
+    }) => {
       const sites = loadSites();
       const today = new Date();
       const dailyData = Array.from({ length: 30 }, (_, i) => {
@@ -43,6 +49,8 @@ export function useAddSite() {
         id: `site-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         name: input.name,
         url: input.url,
+        siteId: input.siteId,
+        siteKey: input.siteKey,
         bookmarkColor: input.bookmarkColor,
         onlineNow: Math.floor(5 + Math.random() * 295),
         dailyData,
@@ -58,7 +66,7 @@ export function useAddSite() {
 export function useBulkAddSites() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (rows: { name: string; url: string; color?: string }[]) => {
+    mutationFn: async (rows: { name: string; url: string; siteId: string; siteKey: string; color?: string }[]) => {
       const sites = loadSites();
       const today = new Date();
       const newOnes: Site[] = rows.map((r, idx) => {
@@ -74,6 +82,8 @@ export function useBulkAddSites() {
           id: `site-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
           name: r.name,
           url: r.url,
+          siteId: r.siteId,
+          siteKey: r.siteKey,
           bookmarkColor: color,
           onlineNow: Math.floor(5 + Math.random() * 295),
           dailyData,
