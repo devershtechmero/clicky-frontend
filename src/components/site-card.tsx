@@ -21,6 +21,7 @@ export function SiteCard({ site, onlineOverride, index }: Props) {
   const [imgErr, setImgErr] = useState(false);
   const updateBookmark = useUpdateBookmark();
 
+  const todayVisitors = site.dailyData[site.dailyData.length - 1]?.visitors ?? 0;
   const last7 = sumLast(site.dailyData, 7);
   const last30 = sumLast(site.dailyData, 30);
   const prev7 = site.dailyData.slice(-14, -7).reduce((a, b) => a + b.visitors, 0);
@@ -62,9 +63,10 @@ export function SiteCard({ site, onlineOverride, index }: Props) {
             href={clickyUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="block truncate text-sm font-semibold text-foreground hover:underline"
+            className="inline-flex max-w-full items-center gap-1 truncate text-sm font-semibold text-foreground hover:underline"
           >
-            {site.name}
+            <span className="truncate">{site.name}</span>
+            <Link className="h-3 w-3 shrink-0" />
           </a>
           <div className="truncate text-xs text-muted-foreground">{site.url}</div>
         </div>
@@ -83,7 +85,13 @@ export function SiteCard({ site, onlineOverride, index }: Props) {
 
       {/* Bottom section */}
       <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-12">
-        <div className="flex flex-row gap-6 lg:col-span-3 lg:flex-col lg:gap-3">
+        <div className="grid grid-cols-3 gap-4 sm:gap-6 lg:col-span-3 lg:grid-cols-1 lg:gap-3">
+          <div>
+            <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Today</div>
+            <div className="text-lg font-semibold text-foreground">
+              {todayVisitors.toLocaleString()}
+            </div>
+          </div>
           <div>
             <div className="text-[11px] uppercase tracking-wide text-muted-foreground">Last 7 days</div>
             <div className="text-2xl font-bold leading-tight text-foreground">
