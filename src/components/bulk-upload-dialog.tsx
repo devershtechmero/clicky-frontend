@@ -16,6 +16,8 @@ import { toast } from "sonner";
 interface Row {
   name: string;
   url: string;
+  siteId: string;
+  siteKey: string;
   color?: string;
 }
 
@@ -39,11 +41,13 @@ export function BulkUploadDialog() {
           .trim()
           .replace(/^https?:\/\//, "")
           .replace(/\/$/, ""),
+        siteId: String(r.siteId ?? r["site id"] ?? r.site_id ?? r.id ?? r.ID ?? "").trim(),
+        siteKey: String(r.siteKey ?? r["site key"] ?? r.site_key ?? r.key ?? r.Key ?? "").trim(),
         color: r.color || r.Color ? String(r.color ?? r.Color).trim().toLowerCase() : undefined,
       }))
-      .filter((r) => r.name && r.url);
+      .filter((r) => r.name && r.url && r.siteId && r.siteKey);
     setRows(parsed);
-    if (!parsed.length) toast.error("No valid rows. Expected columns: name, url, color");
+    if (!parsed.length) toast.error("No valid rows. Expected columns: name, url, site id, site key, color");
   };
 
   const onDrop = (e: React.DragEvent) => {
@@ -101,7 +105,7 @@ export function BulkUploadDialog() {
               Drop your .xlsx file here, or click to browse
             </div>
             <div className="text-xs text-muted-foreground">
-              Expected columns: <code>name</code>, <code>url</code>, <code>color</code>
+              Expected columns: <code>name</code>, <code>url</code>, <code>site id</code>, <code>site key</code>, <code>color</code>
             </div>
             <input
               ref={inputRef}
@@ -125,6 +129,8 @@ export function BulkUploadDialog() {
                   <tr>
                     <th className="px-3 py-2 text-left">Name</th>
                     <th className="px-3 py-2 text-left">URL</th>
+                    <th className="px-3 py-2 text-left">Site ID</th>
+                    <th className="px-3 py-2 text-left">Site Key</th>
                     <th className="px-3 py-2 text-left">Color</th>
                   </tr>
                 </thead>
@@ -133,6 +139,8 @@ export function BulkUploadDialog() {
                     <tr key={i} className="border-t border-border">
                       <td className="px-3 py-1.5">{r.name}</td>
                       <td className="px-3 py-1.5 text-muted-foreground">{r.url}</td>
+                      <td className="px-3 py-1.5 text-muted-foreground">{r.siteId}</td>
+                      <td className="px-3 py-1.5 text-muted-foreground">{r.siteKey}</td>
                       <td className="px-3 py-1.5 text-muted-foreground">{r.color ?? "none"}</td>
                     </tr>
                   ))}

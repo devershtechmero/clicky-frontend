@@ -26,23 +26,37 @@ export function AddSiteDialog() {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [url, setUrl] = useState("");
+  const [siteId, setSiteId] = useState("");
+  const [siteKey, setSiteKey] = useState("");
   const [color, setColor] = useState<BookmarkColor>("none");
   const addSite = useAddSite();
 
+  const resetForm = () => {
+    setName("");
+    setUrl("");
+    setSiteId("");
+    setSiteKey("");
+    setColor("none");
+  };
+
   const submit = () => {
-    if (!name.trim() || !url.trim()) {
-      toast.error("Name and URL are required");
+    if (!name.trim() || !url.trim() || !siteId.trim() || !siteKey.trim()) {
+      toast.error("Website name, website URL, site ID, and site key are required");
       return;
     }
     const cleanUrl = url.trim().replace(/^https?:\/\//, "").replace(/\/$/, "");
     addSite.mutate(
-      { name: name.trim(), url: cleanUrl, bookmarkColor: color },
+      {
+        name: name.trim(),
+        url: cleanUrl,
+        siteId: siteId.trim(),
+        siteKey: siteKey.trim(),
+        bookmarkColor: color,
+      },
       {
         onSuccess: () => {
           toast.success("Website added");
-          setName("");
-          setUrl("");
-          setColor("none");
+          resetForm();
           setOpen(false);
         },
       }
@@ -67,8 +81,16 @@ export function AddSiteDialog() {
             <Input id="ws-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Acme Inc." />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="ws-url">URL</Label>
+            <Label htmlFor="ws-url">Website URL</Label>
             <Input id="ws-url" value={url} onChange={(e) => setUrl(e.target.value)} placeholder="acme.com" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="ws-site-id">Site ID</Label>
+            <Input id="ws-site-id" value={siteId} onChange={(e) => setSiteId(e.target.value)} placeholder="123456789" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="ws-site-key">Site key</Label>
+            <Input id="ws-site-key" value={siteKey} onChange={(e) => setSiteKey(e.target.value)} placeholder="site_key_abc123" />
           </div>
           <div className="space-y-1.5">
             <Label>Bookmark color</Label>
