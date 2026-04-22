@@ -32,7 +32,7 @@ const Login = () => {
           <Card className="rounded-2xl border-border bg-card p-8 shadow-lg">
             <h1 className="mb-1 text-center text-xl font-semibold text-foreground">Welcome back</h1>
             <p className="mb-6 text-center text-sm text-muted-foreground">
-              Sign in to your SiteWatch dashboard
+              Sign in to your Watcher dashboard
             </p>
             <div className="space-y-4">
               <div className="space-y-1.5">

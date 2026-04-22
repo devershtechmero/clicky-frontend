@@ -1,4 +1,4 @@
-import { Coffee } from "lucide-react";
+import { Coffee, Eye } from "lucide-react";
 
 export function CoffeeLogo({ size = 22 }: { size?: number }) {
   return (
@@ -7,10 +7,10 @@ export function CoffeeLogo({ size = 22 }: { size?: number }) {
         className="flex items-center justify-center rounded-lg bg-primary/10 text-primary"
         style={{ width: size + 14, height: size + 14 }}
       >
-        <Coffee size={size} />
+        <Eye size={size} />
       </div>
       <span className="text-lg font-semibold tracking-tight text-primary">
-        SiteWatch
+        Watcher
       </span>
     </div>
   );

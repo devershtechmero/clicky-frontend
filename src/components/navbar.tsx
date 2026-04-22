@@ -13,9 +13,9 @@ export function Navbar() {
         <CoffeeLogo />
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
-              JD
+          <Avatar className="h-8 w-16">
+            <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
+              Admin
             </AvatarFallback>
           </Avatar>
           <Button
