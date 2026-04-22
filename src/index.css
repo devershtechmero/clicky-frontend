@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Coffee & Rose White palette */
+    --background: 28 60% 97%;          /* #FDF6F0 */
+    --foreground: 18 56% 11%;          /* #2C1810 */
+
+    --card: 30 50% 94%;                /* #FAF0E6 */
+    --card-foreground: 18 56% 11%;
+
+    --popover: 30 50% 94%;
+    --popover-foreground: 18 56% 11%;
+
+    --primary: 25 35% 33%;             /* #6F4E37 coffee brown */
+    --primary-foreground: 28 60% 97%;
+
+    --secondary: 28 40% 90%;
+    --secondary-foreground: 18 56% 11%;
+
+    --muted: 28 40% 90%;
+    --muted-foreground: 19 21% 51%;    /* #9C7B6B */
+
+    --accent: 28 40% 88%;
+    --accent-foreground: 18 56% 11%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 25 42% 84%;              /* #E8D5C4 */
+    --input: 25 42% 84%;
+    --ring: 25 35% 33%;
+
+    --radius: 0.75rem;
+
+    /* Bookmark colors (HSL) */
+    --bm-yellow: 45 95% 55%;
+    --bm-red: 0 78% 58%;
+    --bm-green: 142 65% 45%;
+    --bm-blue: 215 85% 58%;
+
+    --sidebar-background: 30 50% 94%;
+    --sidebar-foreground: 18 56% 11%;
+    --sidebar-primary: 25 35% 33%;
+    --sidebar-primary-foreground: 28 60% 97%;
+    --sidebar-accent: 28 40% 88%;
+    --sidebar-accent-foreground: 18 56% 11%;
+    --sidebar-border: 25 42% 84%;
+    --sidebar-ring: 25 35% 33%;
+  }
+
+  .dark {
+    --background: 18 30% 9%;           /* #1C1410 */
+    --foreground: 28 50% 90%;          /* #F5E6D8 */
+
+    --card: 19 22% 13%;                /* #2A1F1A */
+    --card-foreground: 28 50% 90%;
+
+    --popover: 19 22% 13%;
+    --popover-foreground: 28 50% 90%;
+
+    --primary: 23 33% 47%;             /* #A0704F */
+    --primary-foreground: 18 30% 9%;
+
+    --secondary: 19 25% 18%;
+    --secondary-foreground: 28 50% 90%;
+
+    --muted: 19 25% 18%;
+    --muted-foreground: 22 21% 39%;    /* #7A5C4E */
+
+    --accent: 19 25% 20%;
+    --accent-foreground: 28 50% 90%;
+
+    --destructive: 0 70% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 19 28% 19%;              /* #3D2B22 */
+    --input: 19 28% 19%;
+    --ring: 23 33% 47%;
+
+    --sidebar-background: 19 22% 13%;
+    --sidebar-foreground: 28 50% 90%;
+    --sidebar-primary: 23 33% 47%;
+    --sidebar-primary-foreground: 18 30% 9%;
+    --sidebar-accent: 19 25% 20%;
+    --sidebar-accent-foreground: 28 50% 90%;
+    --sidebar-border: 19 28% 19%;
+    --sidebar-ring: 23 33% 47%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fade-in 0.5s ease-out both;
+  }
+  .animate-fade-up {
+    animation: fade-up 0.5s ease-out both;
+  }
+  .pulse-dot {
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.3); }
+}
