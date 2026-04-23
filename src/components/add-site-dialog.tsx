@@ -40,6 +40,8 @@ export function AddSiteDialog() {
   };
 
   const submit = () => {
+    if (addSite.isPending) return;
+
     if (!name.trim() || !url.trim() || !siteId.trim() || !siteKey.trim()) {
       toast.error("Website name, website URL, site ID, and site key are required");
       return;
@@ -54,10 +56,17 @@ export function AddSiteDialog() {
         bookmarkColor: color,
       },
       {
-        onSuccess: () => {
-          toast.success("Website added");
+        onSuccess: (result) => {
+          if (result.meta?.ignored) {
+            toast.info("Website already exists. Duplicate was ignored");
+          } else {
+            toast.success("Website added");
+          }
           resetForm();
           setOpen(false);
+        },
+        onError: (error) => {
+          toast.error(error instanceof Error ? error.message : "Unable to add website");
         },
       }
     );
@@ -109,8 +118,10 @@ export function AddSiteDialog() {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button onClick={submit}>Add Website</Button>
+          <Button variant="ghost" onClick={() => setOpen(false)} disabled={addSite.isPending}>Cancel</Button>
+          <Button onClick={submit} disabled={addSite.isPending}>
+            {addSite.isPending ? "Adding..." : "Add Website"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

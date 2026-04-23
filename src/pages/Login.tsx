@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,16 +7,44 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { CoffeeLogo } from "@/components/coffee-logo";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { isAuthenticated } from "@/lib/auth";
+import { useLogin } from "@/hooks/use-auth";
+import { toast } from "sonner";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
   const navigate = useNavigate();
+  const login = useLogin();
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [navigate]);
 
   const handleSignIn = () => {
-    // fake auth
-    navigate("/dashboard");
+    if (!email.trim() || !password) {
+      toast.error("Email and password are required");
+      return;
+    }
+
+    login.mutate(
+      {
+        email: email.trim().toLowerCase(),
+        password,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Signed in successfully");
+          navigate("/dashboard", { replace: true });
+        },
+        onError: () => {
+          toast.error("Invalid email or password");
+        },
+      },
+    );
   };
 
   return (
@@ -66,8 +94,8 @@ const Login = () => {
                   </button>
                 </div>
               </div>
-              <Button className="w-full" onClick={handleSignIn}>
-                Sign In
+              <Button className="w-full" onClick={handleSignIn} disabled={login.isPending}>
+                {login.isPending ? "Signing in..." : "Sign In"}
               </Button>
               <div className="text-center">
                 <button className="text-xs text-muted-foreground hover:text-primary">

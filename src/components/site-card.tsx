@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Globe, Link, TrendingDown, TrendingUp } from "lucide-react";
 import { Site } from "@/lib/types";
 import { Card } from "@/components/ui/card";
@@ -17,15 +16,24 @@ function sumLast(arr: { visitors: number }[], n: number) {
   return arr.slice(-n).reduce((a, b) => a + b.visitors, 0);
 }
 
+function sumVisitors(arr: { visitors: number }[]) {
+  return arr.reduce((sum, item) => sum + item.visitors, 0);
+}
+
 export function SiteCard({ site, onlineOverride, index }: Props) {
-  const [imgErr, setImgErr] = useState(false);
   const updateBookmark = useUpdateBookmark();
 
+  const last30Data = site.dailyData.slice(-30);
   const todayVisitors = site.dailyData[site.dailyData.length - 1]?.visitors ?? 0;
   const last7 = sumLast(site.dailyData, 7);
-  const last30 = sumLast(site.dailyData, 30);
-  const prev7 = site.dailyData.slice(-14, -7).reduce((a, b) => a + b.visitors, 0);
-  const trend = prev7 > 0 ? ((last7 - prev7) / prev7) * 100 : 0;
+  const last30 = sumVisitors(last30Data);
+  const midPoint = Math.floor(last30Data.length / 2);
+  const previousPeriodVisitors = sumVisitors(last30Data.slice(0, midPoint));
+  const recentPeriodVisitors = sumVisitors(last30Data.slice(midPoint));
+  const trend =
+    previousPeriodVisitors > 0
+      ? ((recentPeriodVisitors - previousPeriodVisitors) / previousPeriodVisitors) * 100
+      : 0;
   const trendUp = trend >= 0;
 
   const graphColor =
@@ -34,7 +42,6 @@ export function SiteCard({ site, onlineOverride, index }: Props) {
       : bookmarkHslColor(site.bookmarkColor);
 
   const online = onlineOverride ?? site.onlineNow;
-  const last30Data = site.dailyData.slice(-30);
   const clickyUrl = `https://clicky.com/?site_id=${encodeURIComponent(site.siteId)}&sitekey=${encodeURIComponent(site.siteKey)}`;
 
   return (
@@ -44,20 +51,9 @@ export function SiteCard({ site, onlineOverride, index }: Props) {
     >
       {/* Top row */}
       <div className="flex items-center gap-3">
-        {!imgErr ? (
-          <img
-            src={`https://www.google.com/s2/favicons?domain=${site.url}&sz=32`}
-            alt=""
-            width={28}
-            height={28}
-            className="rounded-md"
-            onError={() => setImgErr(true)}
-          />
-        ) : (
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-muted">
-            <Globe className="h-4 w-4 text-muted-foreground" />
-          </div>
-        )}
+        <div className="flex h-7 w-7 items-center justify-center rounded-md bg-muted">
+          <Globe className="h-4 w-4 text-muted-foreground" />
+        </div>
         <div className="min-w-0 flex-1">
           <a
             href={clickyUrl}

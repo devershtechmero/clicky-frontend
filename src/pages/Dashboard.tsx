@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Search } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { SubNavbar } from "@/components/sub-navbar";
@@ -6,15 +7,22 @@ import { Input } from "@/components/ui/input";
 import { TagFilter } from "@/components/tag-filter";
 import { SortFilter, SortKey } from "@/components/sort-filter";
 import { SiteCard } from "@/components/site-card";
-import { useOnlineVisitors, useSites } from "@/hooks/use-sites";
+import { useSites } from "@/hooks/use-sites";
 import { BookmarkColor } from "@/lib/types";
+import { isAuthenticated } from "@/lib/auth";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { data: sites = [] } = useSites();
-  const { data: online } = useOnlineVisitors();
   const [query, setQuery] = useState("");
   const [tag, setTag] = useState<BookmarkColor | "all">("all");
   const [sort, setSort] = useState<SortKey>("visitors-desc");
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate("/login", { replace: true });
+    }
+  }, [navigate]);
 
   const visible = useMemo(() => {
     let out = sites.filter((s) => {
@@ -61,7 +69,7 @@ const Dashboard = () => {
         ) : (
           <div className="flex flex-col gap-4">
             {visible.map((s, i) => (
-              <SiteCard key={s.id} site={s} index={i} onlineOverride={online?.[s.id]} />
+              <SiteCard key={s.id} site={s} index={i} />
             ))}
           </div>
         )}

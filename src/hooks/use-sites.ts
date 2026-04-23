@@ -1,35 +1,97 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Site, BookmarkColor } from "@/lib/types";
-import { generateMockSites } from "@/lib/mock-data";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/api";
+import { getAuthToken } from "@/lib/auth";
+import { BookmarkColor, DailyVisitors, Site } from "@/lib/types";
 
-const KEY = "sitewatch.sites";
+type WebsiteAnalytics = {
+  visitorsLast7Days: number;
+  visitorsLast30Days: number;
+  onlineNow: number;
+  visitorsTrend30Days: DailyVisitors[];
+};
 
-function loadSites(): Site[] {
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) return JSON.parse(raw) as Site[];
-  } catch {
-    // ignore
+type WebsitePayload = {
+  id: string;
+  websiteName: string;
+  url: string;
+  siteId: string;
+  siteKey: string;
+  bookmarkColor: BookmarkColor | null;
+  analytics?: WebsiteAnalytics;
+};
+
+type WebsitesResponse = {
+  data: WebsitePayload[];
+  meta?: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+};
+
+const VALID_COLORS: BookmarkColor[] = ["none", "yellow", "red", "green", "blue"];
+
+function fallbackTrendData(days = 30): DailyVisitors[] {
+  const out: DailyVisitors[] = [];
+  const today = new Date();
+
+  for (let i = days - 1; i >= 0; i -= 1) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    out.push({
+      date: d.toISOString().slice(0, 10),
+      visitors: 0,
+    });
   }
-  const seeded = generateMockSites();
-  localStorage.setItem(KEY, JSON.stringify(seeded));
-  return seeded;
+
+  return out;
 }
 
-function saveSites(sites: Site[]) {
-  localStorage.setItem(KEY, JSON.stringify(sites));
+function normalizeBookmarkColor(value: BookmarkColor | null | undefined): BookmarkColor {
+  return VALID_COLORS.includes(value as BookmarkColor) ? (value as BookmarkColor) : "none";
+}
+
+function mapWebsiteToSite(item: WebsitePayload): Site {
+  const dailyData =
+    item.analytics?.visitorsTrend30Days && item.analytics.visitorsTrend30Days.length > 0
+      ? item.analytics.visitorsTrend30Days
+      : fallbackTrendData(30);
+
+  return {
+    id: item.id,
+    name: item.websiteName,
+    url: item.url,
+    siteId: item.siteId,
+    siteKey: item.siteKey,
+    bookmarkColor: normalizeBookmarkColor(item.bookmarkColor),
+    onlineNow: item.analytics?.onlineNow ?? 0,
+    dailyData,
+  };
 }
 
 export function useSites() {
+  const hasToken = Boolean(getAuthToken());
+
   return useQuery({
     queryKey: ["sites"],
-    queryFn: async () => loadSites(),
+    enabled: hasToken,
     staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    queryFn: async () => {
+      const response = await apiRequest<WebsitesResponse>(
+        "/websites?includeAnalytics=true&sortBy=createdAt&sortOrder=desc&paginate=false",
+      );
+
+      return response.data.map(mapWebsiteToSite);
+    },
   });
 }
 
 export function useAddSite() {
   const qc = useQueryClient();
+
   return useMutation({
     mutationFn: async (input: {
       name: string;
@@ -38,93 +100,97 @@ export function useAddSite() {
       siteKey: string;
       bookmarkColor: BookmarkColor;
     }) => {
-      const sites = loadSites();
-      const today = new Date();
-      const dailyData = Array.from({ length: 30 }, (_, i) => {
-        const d = new Date(today);
-        d.setDate(today.getDate() - (29 - i));
-        return { date: d.toISOString().slice(0, 10), visitors: Math.floor(200 + Math.random() * 7800) };
+      return apiRequest<{
+        data: WebsitePayload;
+        meta?: {
+          created: boolean;
+          ignored: boolean;
+          reason?: string;
+        };
+      }>("/websites", {
+        method: "POST",
+        body: {
+          websiteName: input.name,
+          url: input.url,
+          siteId: input.siteId,
+          siteKey: input.siteKey,
+          bookmarkColor: input.bookmarkColor,
+        },
       });
-      const newSite: Site = {
-        id: `site-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-        name: input.name,
-        url: input.url,
-        siteId: input.siteId,
-        siteKey: input.siteKey,
-        bookmarkColor: input.bookmarkColor,
-        onlineNow: Math.floor(5 + Math.random() * 295),
-        dailyData,
-      };
-      const next = [newSite, ...sites];
-      saveSites(next);
-      return next;
     },
-    onSuccess: (next) => qc.setQueryData(["sites"], next),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["sites"] });
+      await qc.invalidateQueries({ queryKey: ["online-visitors"] });
+    },
   });
 }
 
 export function useBulkAddSites() {
   const qc = useQueryClient();
+
   return useMutation({
-    mutationFn: async (rows: { name: string; url: string; siteId: string; siteKey: string; color?: string }[]) => {
-      const sites = loadSites();
-      const today = new Date();
-      const newOnes: Site[] = rows.map((r, idx) => {
-        const dailyData = Array.from({ length: 30 }, (_, i) => {
-          const d = new Date(today);
-          d.setDate(today.getDate() - (29 - i));
-          return { date: d.toISOString().slice(0, 10), visitors: Math.floor(200 + Math.random() * 7800) };
-        });
-        const c = (r.color || "none").toLowerCase();
-        const valid: BookmarkColor[] = ["none", "yellow", "red", "green", "blue"];
-        const color = (valid.includes(c as BookmarkColor) ? c : "none") as BookmarkColor;
-        return {
-          id: `site-${Date.now()}-${idx}-${Math.random().toString(36).slice(2, 6)}`,
-          name: r.name,
-          url: r.url,
-          siteId: r.siteId,
-          siteKey: r.siteKey,
-          bookmarkColor: color,
-          onlineNow: Math.floor(5 + Math.random() * 295),
-          dailyData,
+    mutationFn: async (file: File) => {
+      const form = new FormData();
+      form.append("file", file);
+
+      return apiRequest<{
+        data: {
+          importBatchId: string;
+          totalRows: number;
+          processedRows: number;
+          inserted: number;
+          ignored: number;
+          ignoredExisting: number;
+          ignoredDuplicateInFile: number;
         };
+      }>("/websites/import", {
+        method: "POST",
+        body: form,
       });
-      const next = [...newOnes, ...sites];
-      saveSites(next);
-      return next;
     },
-    onSuccess: (next) => qc.setQueryData(["sites"], next),
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ["sites"] });
+      await qc.invalidateQueries({ queryKey: ["online-visitors"] });
+    },
   });
 }
 
 export function useUpdateBookmark() {
   const qc = useQueryClient();
+
   return useMutation({
     mutationFn: async ({ id, color }: { id: string; color: BookmarkColor }) => {
-      const sites = loadSites();
-      const next = sites.map((s) => (s.id === id ? { ...s, bookmarkColor: color } : s));
-      saveSites(next);
-      return next;
+      await apiRequest(`/websites/${id}/bookmark`, {
+        method: "PATCH",
+        body: {
+          bookmarkColor: color,
+        },
+      });
     },
-    onSuccess: (next) => qc.setQueryData(["sites"], next),
+    onSuccess: (_result, { id, color }) => {
+      qc.setQueryData<Site[]>(["sites"], (current) => {
+        if (!current) return current;
+        return current.map((site) => (site.id === id ? { ...site, bookmarkColor: color } : site));
+      });
+    },
   });
 }
 
 export function useOnlineVisitors() {
+  const hasToken = Boolean(getAuthToken());
+
   return useQuery({
     queryKey: ["online-visitors"],
+    enabled: hasToken,
     queryFn: async () => {
-      const sites = loadSites();
-      const updated = sites.map((s) => ({
-        ...s,
-        onlineNow: Math.max(1, s.onlineNow + Math.floor(Math.random() * 41) - 20),
-      }));
-      saveSites(updated);
-      return updated.reduce<Record<string, number>>((acc, s) => {
-        acc[s.id] = s.onlineNow;
+      const response = await apiRequest<WebsitesResponse>(
+        "/websites?includeAnalytics=true&sortBy=createdAt&sortOrder=desc&paginate=false",
+      );
+
+      return response.data.reduce<Record<string, number>>((acc, site) => {
+        acc[site.id] = site.analytics?.onlineNow ?? 0;
         return acc;
       }, {});
     },
-    refetchInterval: 30_000,
   });
 }

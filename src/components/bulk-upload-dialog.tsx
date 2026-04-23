@@ -25,10 +25,12 @@ export function BulkUploadDialog() {
   const [open, setOpen] = useState(false);
   const [rows, setRows] = useState<Row[]>([]);
   const [fileName, setFileName] = useState<string>("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const bulk = useBulkAddSites();
 
   const handleFile = async (file: File) => {
+    setSelectedFile(file);
     setFileName(file.name);
     const buf = await file.arrayBuffer();
     const wb = XLSX.read(buf);
@@ -57,13 +59,21 @@ export function BulkUploadDialog() {
   };
 
   const confirm = () => {
-    if (!rows.length) return;
-    bulk.mutate(rows, {
-      onSuccess: () => {
-        toast.success(`Imported ${rows.length} website${rows.length === 1 ? "" : "s"}`);
+    if (!rows.length || !selectedFile) return;
+    bulk.mutate(selectedFile, {
+      onSuccess: (result) => {
+        const { inserted, ignored } = result.data;
+        toast.success(`Imported ${inserted} new website${inserted === 1 ? "" : "s"}`);
+        if (ignored > 0) {
+          toast.info(`Ignored ${ignored} duplicate row${ignored === 1 ? "" : "s"}`);
+        }
         setRows([]);
         setFileName("");
+        setSelectedFile(null);
         setOpen(false);
+      },
+      onError: (error) => {
+        toast.error(error instanceof Error ? error.message : "Import failed");
       },
     });
   };
@@ -71,6 +81,7 @@ export function BulkUploadDialog() {
   const reset = () => {
     setRows([]);
     setFileName("");
+    setSelectedFile(null);
     if (inputRef.current) inputRef.current.value = "";
   };
 
@@ -156,8 +167,8 @@ export function BulkUploadDialog() {
               Choose another file
             </Button>
           )}
-          <Button onClick={confirm} disabled={!rows.length}>
-            Import {rows.length || ""}
+          <Button onClick={confirm} disabled={!rows.length || !selectedFile || bulk.isPending}>
+            {bulk.isPending ? "Importing..." : `Import ${rows.length || ""}`}
           </Button>
         </DialogFooter>
       </DialogContent>
