@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/api";
 import { getAuthToken } from "@/lib/auth";
+import { readCachedSites, writeCachedSites } from "@/lib/sites-cache";
 import { BookmarkColor, DailyVisitors, Site } from "@/lib/types";
 
 type WebsiteAnalytics = {
@@ -31,6 +32,8 @@ type WebsitesResponse = {
 };
 
 const VALID_COLORS: BookmarkColor[] = ["none", "yellow", "red", "green", "blue"];
+const SITES_CACHE_STALE_MS = 5 * 60 * 1000;
+const SITES_CACHE_GC_MS = 60 * 60 * 1000;
 
 function fallbackTrendData(days = 30): DailyVisitors[] {
   const out: DailyVisitors[] = [];
@@ -72,11 +75,15 @@ function mapWebsiteToSite(item: WebsitePayload): Site {
 
 export function useSites() {
   const hasToken = Boolean(getAuthToken());
+  const cachedSites = hasToken ? readCachedSites() : null;
 
   return useQuery({
     queryKey: ["sites"],
     enabled: hasToken,
-    staleTime: Infinity,
+    initialData: cachedSites?.sites,
+    initialDataUpdatedAt: cachedSites?.savedAt,
+    staleTime: SITES_CACHE_STALE_MS,
+    gcTime: SITES_CACHE_GC_MS,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     queryFn: async () => {
@@ -84,7 +91,10 @@ export function useSites() {
         "/websites?includeAnalytics=true&sortBy=createdAt&sortOrder=desc&paginate=false",
       );
 
-      return response.data.map(mapWebsiteToSite);
+      const sites = response.data.map(mapWebsiteToSite);
+      writeCachedSites(sites);
+
+      return sites;
     },
   });
 }
@@ -170,7 +180,9 @@ export function useUpdateBookmark() {
     onSuccess: (_result, { id, color }) => {
       qc.setQueryData<Site[]>(["sites"], (current) => {
         if (!current) return current;
-        return current.map((site) => (site.id === id ? { ...site, bookmarkColor: color } : site));
+        const next = current.map((site) => (site.id === id ? { ...site, bookmarkColor: color } : site));
+        writeCachedSites(next);
+        return next;
       });
     },
   });

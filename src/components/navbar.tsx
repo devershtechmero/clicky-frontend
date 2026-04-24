@@ -6,6 +6,7 @@ import { CoffeeLogo } from "./coffee-logo";
 import { ThemeToggle } from "./theme-toggle";
 import { LogOut } from "lucide-react";
 import { clearAuth, getAuthUser } from "@/lib/auth";
+import { clearCachedSites } from "@/lib/sites-cache";
 
 export function Navbar() {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export function Navbar() {
   const user = getAuthUser();
 
   const handleLogout = () => {
+    clearCachedSites();
     clearAuth();
     qc.clear();
     navigate("/login", { replace: true });
