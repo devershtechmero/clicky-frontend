@@ -68,6 +68,7 @@ export function SiteCard({ site, onlineOverride, index }: Props) {
         </div>
         <BookmarkSelector
           value={site.bookmarkColor}
+          pending={updateBookmark.isPending}
           onChange={(c) => updateBookmark.mutate({ id: site.id, color: c })}
         />
         <div className="flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium">

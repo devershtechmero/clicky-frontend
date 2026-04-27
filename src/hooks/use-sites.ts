@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { apiRequest } from "@/lib/api";
 import { getAuthToken } from "@/lib/auth";
 import { readCachedSites, writeCachedSites } from "@/lib/sites-cache";
@@ -177,13 +178,26 @@ export function useUpdateBookmark() {
         },
       });
     },
-    onSuccess: (_result, { id, color }) => {
+    onMutate: async ({ id, color }) => {
+      const previousSites = qc.getQueryData<Site[]>(["sites"]);
+
       qc.setQueryData<Site[]>(["sites"], (current) => {
         if (!current) return current;
         const next = current.map((site) => (site.id === id ? { ...site, bookmarkColor: color } : site));
         writeCachedSites(next);
         return next;
       });
+
+      await qc.cancelQueries({ queryKey: ["sites"] });
+
+      return { previousSites };
+    },
+    onError: (_error, _input, context) => {
+      if (!context?.previousSites) return;
+
+      qc.setQueryData(["sites"], context.previousSites);
+      writeCachedSites(context.previousSites);
+      toast.error("Bookmark was not saved");
     },
   });
 }

@@ -1,6 +1,12 @@
 import { BookmarkColor } from "@/lib/types";
 
-export const BOOKMARK_ORDER: BookmarkColor[] = ["none", "yellow", "red", "green", "blue"];
+export const BOOKMARK_OPTIONS: { value: BookmarkColor; label: string }[] = [
+  { value: "none", label: "None" },
+  { value: "yellow", label: "Yellow" },
+  { value: "red", label: "Red" },
+  { value: "green", label: "Green" },
+  { value: "blue", label: "Blue" },
+];
 
 export const BOOKMARK_HSL: Record<BookmarkColor, string> = {
   none: "var(--muted-foreground)",
