@@ -1,6 +1,18 @@
 import { getAuthToken } from "@/lib/auth";
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/$/, "") || "/api";
+const normalizeBase = (value: string): string => value.replace(/\/$/, "");
+
+const envBase = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.trim();
+const runtimeBase = globalThis.__CLICKY_API_BASE_URL__?.trim();
+const defaultBase = import.meta.env.DEV ? "http://localhost:5000/api" : "/api";
+const API_BASE = normalizeBase(runtimeBase || envBase || defaultBase);
+
+if (!import.meta.env.DEV && !runtimeBase && !envBase && API_BASE.startsWith("/")) {
+  // Warn once in production because relative /api requires same-origin backend routing/proxy.
+  console.warn(
+    "[clicky] Using relative API base '/api' in production. Set VITE_API_BASE_URL if your backend is hosted on a different domain.",
+  );
+}
 
 type RequestOptions = {
   method?: "GET" | "POST" | "PATCH" | "DELETE";

@@ -48,13 +48,21 @@ It is especially helpful for:
 npm install
 ```
 
-2. Create a `.env` file in `frontend/` (optional but recommended):
+2. Create a `.env` file in `frontend/` (recommended):
 
 ```env
 VITE_API_BASE_URL=http://localhost:5000/api
 ```
 
-If not set, the app already defaults to `http://localhost:5000/api`.
+Base URL behavior:
+- `development` default: `http://localhost:5000/api`
+- `production` default: `/api` (same-origin, requires a proxy/rewrite to backend)
+
+If frontend and backend are on different production domains, you must set:
+
+```env
+VITE_API_BASE_URL=https://<your-backend-domain>/api
+```
 
 3. Start dev server:
 
@@ -79,7 +87,8 @@ npm run dev
 The frontend expects the backend API to be running.
 
 Default API base URL:
-- `http://localhost:5000/api`
+- development: `http://localhost:5000/api`
+- production: `/api` unless `VITE_API_BASE_URL` is set
 
 Main API flows used:
 - `POST /auth/login`
